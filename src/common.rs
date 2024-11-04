@@ -6,15 +6,20 @@ use winit::{
 };
 
 pub struct Inputs<'a> {
-    pub source : ShaderSource<'a>,
+    pub source: ShaderSource<'a>,
     pub topology: PrimitiveTopology,
     pub strip_index_format: Option<IndexFormat>,
 }
 
-pub async fn run(event_loop: EventLoop<()>, window: &Window, inputs: Inputs<'_>, num_vertices: u32) {      
+pub async fn run(
+    event_loop: EventLoop<()>,
+    window: &Window,
+    inputs: Inputs<'_>,
+    num_vertices: u32,
+) {
     let size = window.inner_size();
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-        backends: wgpu::Backends::DX12,
+        backends: wgpu::Backends::METAL,
         dx12_shader_compiler: Default::default(),
     });
     let surface = unsafe { instance.create_surface(&window) }.unwrap();
@@ -48,7 +53,7 @@ pub async fn run(event_loop: EventLoop<()>, window: &Window, inputs: Inputs<'_>,
         width: size.width,
         height: size.height,
         present_mode: wgpu::PresentMode::Fifo,
-        alpha_mode:surface_caps.alpha_modes[0],
+        alpha_mode: surface_caps.alpha_modes[0],
         view_formats: vec![],
     };
     surface.configure(&device, &config);
@@ -58,7 +63,7 @@ pub async fn run(event_loop: EventLoop<()>, window: &Window, inputs: Inputs<'_>,
         label: None,
         source: inputs.source,
     });
-    
+
     let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: None,
         bind_group_layouts: &[],
@@ -85,9 +90,9 @@ pub async fn run(event_loop: EventLoop<()>, window: &Window, inputs: Inputs<'_>,
                 write_mask: wgpu::ColorWrites::ALL,
             })],
         }),
-        primitive: wgpu::PrimitiveState{
-            topology:inputs.topology,
-            strip_index_format:inputs.strip_index_format,
+        primitive: wgpu::PrimitiveState {
+            topology: inputs.topology,
+            strip_index_format: inputs.strip_index_format,
             ..Default::default()
         },
         depth_stencil: None,
@@ -95,7 +100,7 @@ pub async fn run(event_loop: EventLoop<()>, window: &Window, inputs: Inputs<'_>,
         multiview: None,
     });
 
-    event_loop.run(move |event, _, control_flow| {       
+    event_loop.run(move |event, _, control_flow| {
         let _ = (&instance, &adapter, &shader, &pipeline_layout);
         *control_flow = ControlFlow::Wait;
         match event {
@@ -111,8 +116,10 @@ pub async fn run(event_loop: EventLoop<()>, window: &Window, inputs: Inputs<'_>,
             }
             Event::RedrawRequested(_) => {
                 let frame = surface.get_current_texture().unwrap();
-                
-                let view = frame.texture.create_view(&wgpu::TextureViewDescriptor::default());
+
+                let view = frame
+                    .texture
+                    .create_view(&wgpu::TextureViewDescriptor::default());
                 let mut encoder =
                     device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
                 {
@@ -122,7 +129,12 @@ pub async fn run(event_loop: EventLoop<()>, window: &Window, inputs: Inputs<'_>,
                             view: &view,
                             resolve_target: None,
                             ops: wgpu::Operations {
-                                load: wgpu::LoadOp::Clear(wgpu::Color {r: 0.05, g:0.062, b:0.08, a:1.0}),
+                                load: wgpu::LoadOp::Clear(wgpu::Color {
+                                    r: 0.05,
+                                    g: 0.062,
+                                    b: 0.08,
+                                    a: 1.0,
+                                }),
                                 store: true,
                             },
                         })],
@@ -143,4 +155,3 @@ pub async fn run(event_loop: EventLoop<()>, window: &Window, inputs: Inputs<'_>,
         }
     });
 }
-
